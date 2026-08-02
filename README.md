@@ -1,25 +1,65 @@
-# CODING AGENTS: READ THIS FIRST
+# BST Visualizer
 
-This is a **handoff bundle** from Claude Design (claude.ai/design).
+An interactive Binary Search Tree visualizer built with Next.js, React, and TypeScript. Insert, delete, search, and traverse a BST while watching every step of the algorithm animate in real time — highlighted comparisons, live pseudocode tracking, and a console log narrating each decision.
 
-A user mocked up designs in HTML/CSS/JS using an AI design tool, then exported this bundle so a coding agent can implement the designs for real.
+**Live demo:** https://bstvisualizernextjs.vercel.app
 
-## What you should do — IMPORTANT
+## Features
 
-**Read the chat transcripts first.** There are 1 chat transcript(s) in `chats/`. The transcripts show the full back-and-forth between the user and the design assistant — they tell you **what the user actually wants** and **where they landed** after iterating. Don't skip them. The final HTML files are the output, but the chat is where the intent lives.
+- **Insert / Delete / Search** with step-by-step animated walkthroughs
+- **Predecessor / Successor** lookup
+- **Select(k)** — find the k-th smallest value via in-order rank counting
+- **Traversals** — Inorder, Preorder, Postorder, and Level Order, all animated
+- Live pseudocode panel with the active line highlighted as each step plays
+- Step-by-step console log narrating what the algorithm is doing
+- Random tree generation and manual reset/clear
+- Play / Pause / Reset animation controls with adjustable speed
+- Zoom and pan on the tree canvas
+- Light and dark themes
+- Responsive layout with mobile-friendly slide-in panels
 
-**Read `project/BST Visualizer.dc.html` in full.** The user had this file open when they triggered the handoff, so it's almost certainly the primary design they want built. Read it top to bottom — don't skim. Then **follow its imports**: open every file it pulls in (shared components, CSS, scripts) so you understand how the pieces fit together before you start implementing.
+## Tech Stack
 
-**If anything is ambiguous, ask the user to confirm before you start implementing.** It's much cheaper to clarify scope up front than to build the wrong thing.
+- [Next.js](https://nextjs.org) 16 (App Router)
+- [React](https://react.dev) 19
+- [TypeScript](https://www.typescriptlang.org) (strict mode)
+- Plain inline styles + a small global stylesheet for animations, hover states, and responsive breakpoints — no CSS framework
 
-## About the design files
+## Getting Started
 
-The design medium is **HTML/CSS/JS** — these are prototypes, not production code. Your job is to **recreate them pixel-perfectly** in whatever technology makes sense for the target codebase (React, Vue, native, whatever fits). Match the visual output; don't copy the prototype's internal structure unless it happens to fit.
+```bash
+npm install
+npm run dev
+```
 
-**Don't render these files in a browser or take screenshots unless the user asks you to.** Everything you need — dimensions, colors, layout rules — is spelled out in the source. Read the HTML and CSS directly; a screenshot won't tell you anything they don't.
+Open [http://localhost:3000](http://localhost:3000) to view it.
 
-## Bundle contents
+Other scripts:
 
-- `README.md` — this file
-- `chats/` — conversation transcripts (read these!)
-- `project/` — the `BST Visualizer Tool` project files (HTML prototypes, assets, components)
+```bash
+npm run build   # production build
+npm run start   # run the production build locally
+npm run lint    # lint the project
+```
+
+## Project Structure
+
+```
+app/
+  layout.tsx        Root layout, font loading, metadata
+  page.tsx           Single route — renders the visualizer
+  globals.css        Keyframe animations, hover states, responsive breakpoints
+
+lib/
+  bst.ts             Pure BST algorithms — insert, delete, search, traversals, layout
+  theme.ts           Light/dark color token maps
+
+components/
+  BSTVisualizer.tsx  UI: controls, canvas rendering, animation playback, state
+```
+
+The tree algorithms in `lib/bst.ts` are plain, framework-agnostic functions decoupled from the UI — each user action builds a list of animation "steps" up front, which `BSTVisualizer.tsx` then plays back on a timer.
+
+## Deployment
+
+Deployed on [Vercel](https://vercel.com). Pushes to the connected GitHub repository trigger new deployments automatically.
