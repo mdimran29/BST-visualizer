@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+html,body{margin:0;padding:0;}
+*{box-sizing:border-box;}
+::-webkit-scrollbar{width:8px;height:8px;}
+::-webkit-scrollbar-thumb{background:rgba(148,163,184,0.25);border-radius:8px;}
+::-webkit-scrollbar-thumb:hover{background:rgba(148,163,184,0.4);}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+@keyframes cardIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+@keyframes pulseGlow{0%,100%{filter:drop-shadow(0 0 0px currentColor);}50%{filter:drop-shadow(0 0 6px currentColor);}}
+@keyframes dotBlink{0%,100%{opacity:1;}50%{opacity:.3;}}
+.layout-grid{display:grid;grid-template-columns:280px 1fr 300px;}
+.mobile-fab{display:none;}
+.icon-btn:hover{background:rgba(148,163,184,0.12) !important;}
+@media (max-width:1150px){
+  .layout-grid{grid-template-columns:256px 1fr;}
+  .right-sidebar{position:fixed;top:64px;right:0;bottom:0;width:300px;transform:translateX(100%);transition:transform .32s cubic-bezier(.4,0,.2,1);z-index:50;box-shadow:-16px 0 40px rgba(0,0,0,0.35);}
+  .right-sidebar.sheet-open{transform:translateX(0);}
+}
+@media (max-width:780px){
+  .layout-grid{grid-template-columns:1fr;}
+  .left-sidebar{position:fixed;left:0;right:0;bottom:0;top:auto;height:78vh;transform:translateY(100%);transition:transform .32s cubic-bezier(.4,0,.2,1);z-index:50;border-radius:20px 20px 0 0;box-shadow:0 -16px 40px rgba(0,0,0,0.35);}
+  .left-sidebar.sheet-open{transform:translateY(0);}
+  .mobile-fab{display:flex;}
+  .console-panel{height:130px !important;}
+}
+</style>
+</helmet>
+<div style="height:100vh;width:100%;display:flex;flex-direction:column;background:{{ c.bg }};color:{{ c.text }};font-family:'Inter',system-ui,sans-serif;overflow:hidden;position:relative;">
+
+  <div style="height:64px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:0 24px;background:{{ c.surface }};border-bottom:1px solid {{ c.border }};z-index:20;">
+    <div style="display:flex;align-items:center;gap:12px;">
+      <div style="width:32px;height:32px;border-radius:9px;background:linear-gradient(135deg,#3B82F6,#22C55E);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="5" r="2.6" fill="white"></circle><circle cx="5" cy="19" r="2.6" fill="white"></circle><circle cx="19" cy="19" r="2.6" fill="white"></circle><path d="M12 7.6V13M12 13L6.2 17M12 13L17.8 17" stroke="white" stroke-width="1.6" stroke-linecap="round"></path></svg>
+      </div>
+      <div style="display:flex;flex-direction:column;line-height:1.1;">
+        <span style="font-size:14.5px;font-weight:700;letter-spacing:-0.01em;">BST Visualizer</span>
+        <span style="font-size:11px;color:{{ c.muted }};font-weight:500;">Binary Search Tree</span>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:6px;">
+      <button class="icon-btn" onClick="{{ handleThemeToggle }}" title="Toggle theme" style="width:36px;height:36px;border-radius:10px;border:1px solid {{ c.border }};background:transparent;color:{{ c.text }};display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .15s ease;">
+        <sc-if value="{{ isDark }}" hint-placeholder-val="{{ true }}">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 12.8A9 9 0 1 1 11.2 3 7.2 7.2 0 0 0 21 12.8Z"></path></svg>
+        </sc-if>
+        <sc-if value="{{ isLight }}" hint-placeholder-val="{{ false }}">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="4.2"></circle><path d="M12 2.5v2.4M12 19.1v2.4M4.4 4.4l1.7 1.7M17.9 17.9l1.7 1.7M2.5 12h2.4M19.1 12h2.4M4.4 19.6l1.7-1.7M17.9 6.1l1.7-1.7" stroke-linecap="round"></path></svg>
+        </sc-if>
+      </button>
+      <a href="https://github.com" target="_blank" rel="noopener" class="icon-btn" title="View source" style="width:36px;height:36px;border-radius:10px;border:1px solid {{ c.border }};background:transparent;color:{{ c.text }};display:flex;align-items:center;justify-content:center;text-decoration:none;transition:background .15s ease;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5C5.65.5.5 5.66.5 12.03c0 5.1 3.29 9.43 7.86 10.96.57.1.78-.25.78-.55v-2.15c-3.2.7-3.87-1.36-3.87-1.36-.53-1.33-1.29-1.69-1.29-1.69-1.05-.72.08-.7.08-.7 1.17.08 1.78 1.2 1.78 1.2 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.7 0-1.26.45-2.29 1.19-3.09-.12-.29-.52-1.47.11-3.07 0 0 .97-.31 3.18 1.18a11 11 0 0 1 5.79 0c2.2-1.49 3.17-1.18 3.17-1.18.64 1.6.24 2.78.12 3.07.74.8 1.18 1.83 1.18 3.09 0 4.43-2.7 5.4-5.27 5.69.42.36.78 1.08.78 2.17v3.22c0 .3.21.66.79.55A10.53 10.53 0 0 0 23.5 12.03C23.5 5.66 18.35.5 12 .5Z"></path></svg>
+      </a>
+      <button class="icon-btn" onClick="{{ handleGlobalReset }}" style="height:36px;padding:0 14px;border-radius:10px;border:1px solid {{ c.border }};background:transparent;color:{{ c.text }};display:flex;align-items:center;gap:7px;cursor:pointer;font-size:13px;font-weight:600;font-family:inherit;transition:background .15s ease;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 12a9 9 0 1 0 3-6.7"></path><path d="M3 4v5h5"></path></svg>
+        Reset
+      </button>
+    </div>
+  </div>
+
+  <div class="layout-grid" style="flex:1;min-height:0;position:relative;">
+
+    <div class="{{ leftSidebarClass }}" style="width:280px;background:{{ c.surface }};border-right:1px solid {{ c.border }};padding:22px 20px;overflow-y:auto;display:flex;flex-direction:column;gap:26px;animation:cardIn .45s ease both;">
+
+      <div style="display:flex;flex-direction:column;gap:14px;">
+        <span style="font-size:11.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:{{ c.muted }};">Controls</span>
+        <div style="display:flex;flex-direction:column;gap:7px;">
+          <label style="font-size:12.5px;color:{{ c.muted }};font-weight:500;">Enter Value</label>
+          <input type="text" inputmode="numeric" placeholder="e.g. 42" value="{{ inputValue }}" onChange="{{ handleInputChange }}" onKeyDown="{{ handleInputKeyDown }}" style="width:100%;padding:10px 12px;border-radius:10px;background:{{ c.bg }};border:1px solid {{ c.border }};color:{{ c.text }};font-size:14px;font-family:inherit;outline:none;" style-focus="border-color:#3B82F6;"></input>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <button onClick="{{ handleInsert }}" style="height:38px;border-radius:10px;border:none;background:#3B82F6;color:white;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:transform .12s ease,filter .12s ease;" style-hover="filter:brightness(1.1);transform:translateY(-1px);">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>
+            Insert
+          </button>
+          <button onClick="{{ handleDelete }}" disabled="{{ isEmpty }}" style="height:38px;border-radius:10px;border:1px solid rgba(239,68,68,0.4);background:rgba(239,68,68,0.1);color:#EF4444;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:transform .12s ease,filter .12s ease;" style-hover="filter:brightness(1.15);transform:translateY(-1px);">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 12h14"></path></svg>
+            Delete
+          </button>
+        </div>
+        <button onClick="{{ handleSearch }}" style="height:38px;border-radius:10px;border:1px solid rgba(59,130,246,0.4);background:rgba(59,130,246,0.1);color:#3B82F6;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;transition:transform .12s ease,filter .12s ease;" style-hover="filter:brightness(1.15);transform:translateY(-1px);">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="10.5" cy="10.5" r="6.5"></circle><path d="M20 20l-4.5-4.5" stroke-linecap="round"></path></svg>
+          Search
+        </button>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <button onClick="{{ handleRandomTree }}" style="height:36px;border-radius:10px;border:1px solid {{ c.border }};background:transparent;color:{{ c.text }};font-size:12.5px;font-weight:600;font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:background .12s ease;" style-hover="background:rgba(148,163,184,0.1);">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h4l7 12h5M4 18h4l2.2-3.8M16 6h4M16 6l-2.5 2.5M20 6l-2.5-2.5M20 18l-2.5 2.5M20 18l-2.5-2.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+            Random
+          </button>
+          <button onClick="{{ handleClearTree }}" disabled="{{ isEmpty }}" style="height:36px;border-radius:10px;border:1px solid {{ c.border }};background:transparent;color:{{ c.muted }};font-size:12.5px;font-weight:600;font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:background .12s ease;" style-hover="background:rgba(148,163,184,0.1);">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M8 6V4h8v2M6 6l1 14h10l1-14"></path></svg>
+            Clear
+          </button>
+        </div>
+      </div>
+
+      <div style="height:1px;background:{{ c.border }};"></div>
+
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <span style="font-size:11.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:{{ c.muted }};">Traversal</span>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <sc-for list="{{ traversalTypes }}" as="tt" hint-placeholder-count="4">
+            <button onClick="{{ tt.onClick }}" disabled="{{ isEmpty }}" style="height:36px;border-radius:10px;border:1px solid {{ tt.border }};background:{{ tt.bg }};color:{{ tt.color }};font-size:12.5px;font-weight:600;font-family:inherit;cursor:pointer;transition:background .12s ease;" style-hover="filter:brightness(1.12);">
+              {{ tt.label }}
+            </button>
+          </sc-for>
+        </div>
+      </div>
+
+      <div style="height:1px;background:{{ c.border }};"></div>
+
+      <div style="display:flex;flex-direction:column;gap:14px;">
+        <span style="font-size:11.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:{{ c.muted }};">Animation</span>
+        <div style="display:flex;flex-direction:column;gap:6px;">
+          <input type="range" min="0" max="2" step="1" value="{{ speedIndex }}" onChange="{{ handleSpeedChange }}" style="width:100%;accent-color:#3B82F6;"></input>
+          <div style="display:flex;justify-content:space-between;font-size:11px;color:{{ c.muted }};font-weight:500;">
+            <span>Slow</span><span>Normal</span><span>Fast</span>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+          <button onClick="{{ handlePlay }}" disabled="{{ playDisabled }}" style="height:38px;border-radius:10px;border:none;background:#22C55E;color:white;display:flex;align-items:center;justify-content:center;cursor:pointer;opacity:{{ playOpacity }};transition:filter .12s ease;" style-hover="filter:brightness(1.1);">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M6 4.5v15l13-7.5z"></path></svg>
+          </button>
+          <button onClick="{{ handlePause }}" disabled="{{ pauseDisabled }}" style="height:38px;border-radius:10px;border:1px solid {{ c.border }};background:transparent;color:{{ c.text }};display:flex;align-items:center;justify-content:center;cursor:pointer;opacity:{{ pauseOpacity }};transition:background .12s ease;" style-hover="background:rgba(148,163,184,0.1);">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4.5" width="4" height="15" rx="1"></rect><rect x="14" y="4.5" width="4" height="15" rx="1"></rect></svg>
+          </button>
+          <button onClick="{{ handleResetAnimation }}" style="height:38px;border-radius:10px;border:1px solid {{ c.border }};background:transparent;color:{{ c.text }};display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .12s ease;" style-hover="background:rgba(148,163,184,0.1);">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3 12a9 9 0 1 0 3-6.7"></path><path d="M3 4v5h5"></path></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div style="position:relative;background:{{ c.canvasBg }};overflow:hidden;background-image:radial-gradient({{ c.dot }} 1px, transparent 1px);background-size:26px 26px;">
+
+      <div style="position:absolute;top:16px;left:16px;display:flex;flex-direction:column;gap:6px;background:{{ c.surface }}cc;backdrop-filter:blur(10px);border:1px solid {{ c.border }};border-radius:12px;padding:10px 14px;z-index:5;">
+        <sc-for list="{{ legend }}" as="lg" hint-placeholder-count="4">
+          <div style="display:flex;align-items:center;gap:8px;font-size:11.5px;color:{{ c.muted }};font-weight:500;">
+            <span style="width:8px;height:8px;border-radius:50%;background:{{ lg.color }};flex-shrink:0;"></span>
+            {{ lg.label }}
+          </div>
+        </sc-for>
+      </div>
+
+      <div onWheel="{{ handleWheel }}" onMouseDown="{{ handleMouseDown }}" onMouseMove="{{ handleMouseMove }}" onMouseUp="{{ handleMouseUp }}" onMouseLeave="{{ handleMouseUp }}" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;cursor:{{ wrapperCursor }};">
+        <sc-if value="{{ hasTree }}" hint-placeholder-val="{{ true }}">
+          <div style="position:relative;width:{{ layoutWidth }}px;height:{{ layoutHeight }}px;transform:{{ canvasTransform }};transition:{{ canvasTransition }};">
+            <svg width="{{ layoutWidth }}" height="{{ layoutHeight }}" style="position:absolute;top:0;left:0;overflow:visible;">
+              <sc-for list="{{ edges }}" as="edge" hint-placeholder-count="8">
+                <line x1="{{ edge.x1 }}" y1="{{ edge.y1 }}" x2="{{ edge.x2 }}" y2="{{ edge.y2 }}" stroke="{{ c.edge }}" stroke-width="2" style="transition:x1 .45s ease,y1 .45s ease,x2 .45s ease,y2 .45s ease;"></line>
+              </sc-for>
+              <sc-for list="{{ nodes }}" as="node" hint-placeholder-count="9">
+                <g style="transform:translate({{ node.x }}px,{{ node.y }}px);transition:transform .45s cubic-bezier(.34,1.4,.64,1);">
+                  <circle r="26" fill="{{ node.fill }}" stroke="{{ node.stroke }}" stroke-width="2.4" style="transition:fill .25s ease,stroke .25s ease,r .3s ease;animation:{{ node.pulseAnim }};color:{{ node.stroke }};cursor:default;" style-hover="filter:brightness(1.2);"></circle>
+                </g>
+              </sc-for>
+            </svg>
+            <div style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;">
+              <sc-for list="{{ nodes }}" as="node" hint-placeholder-count="9">
+                <div style="position:absolute;left:{{ node.x }}px;top:{{ node.y }}px;transform:translate(-50%,-50%);font-size:15px;font-weight:700;color:{{ node.text }};font-family:'Inter',sans-serif;user-select:none;transition:left .45s cubic-bezier(.34,1.4,.64,1),top .45s cubic-bezier(.34,1.4,.64,1);">{{ node.value }}</div>
+              </sc-for>
+            </div>
+          </div>
+        </sc-if>
+        <sc-if value="{{ isEmpty }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-direction:column;align-items:center;gap:16px;">
+            <svg width="120" height="100" viewBox="0 0 120 100" fill="none">
+              <line x1="60" y1="22" x2="30" y2="52" stroke="{{ c.border }}" stroke-width="2"></line>
+              <line x1="60" y1="22" x2="90" y2="52" stroke="{{ c.border }}" stroke-width="2"></line>
+              <line x1="30" y1="52" x2="15" y2="80" stroke="{{ c.border }}" stroke-width="2"></line>
+              <line x1="30" y1="52" x2="45" y2="80" stroke="{{ c.border }}" stroke-width="2"></line>
+              <line x1="90" y1="52" x2="105" y2="80" stroke="{{ c.border }}" stroke-width="2"></line>
+              <circle cx="60" cy="22" r="12" fill="{{ c.surfaceAlt }}" stroke="{{ c.border }}" stroke-width="2"></circle>
+              <circle cx="30" cy="52" r="12" fill="{{ c.surfaceAlt }}" stroke="{{ c.border }}" stroke-width="2"></circle>
+              <circle cx="90" cy="52" r="12" fill="{{ c.surfaceAlt }}" stroke="{{ c.border }}" stroke-width="2"></circle>
+              <circle cx="15" cy="80" r="10" fill="{{ c.surfaceAlt }}" stroke="{{ c.border }}" stroke-width="2"></circle>
+              <circle cx="45" cy="80" r="10" fill="{{ c.surfaceAlt }}" stroke="{{ c.border }}" stroke-width="2"></circle>
+              <circle cx="105" cy="80" r="10" fill="{{ c.surfaceAlt }}" stroke="{{ c.border }}" stroke-width="2"></circle>
+            </svg>
+            <div style="text-align:center;">
+              <div style="font-size:15px;font-weight:600;color:{{ c.text }};margin-bottom:4px;">Start by inserting a value</div>
+              <div style="font-size:12.5px;color:{{ c.muted }};">Type a number and hit Insert, or generate a random tree</div>
+            </div>
+          </div>
+        </sc-if>
+      </div>
+
+      <div style="position:absolute;bottom:20px;right:20px;display:flex;align-items:center;gap:10px;background:{{ c.surface }}cc;backdrop-filter:blur(10px);border:1px solid {{ c.border }};border-radius:14px;padding:8px 12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);z-index:5;">
+        <span style="font-size:11.5px;color:{{ c.muted }};font-weight:600;font-family:'JetBrains Mono',monospace;">{{ speedLabel }}</span>
+        <span style="width:1px;height:14px;background:{{ c.border }};"></span>
+        <span style="font-size:11.5px;color:{{ c.muted }};font-weight:600;font-family:'JetBrains Mono',monospace;"><span ref="{{ fpsRef }}">60</span> fps</span>
+        <span style="width:1px;height:14px;background:{{ c.border }};"></span>
+        <button onClick="{{ handleZoomOut }}" style="width:26px;height:26px;border-radius:8px;border:1px solid {{ c.border }};background:transparent;color:{{ c.text }};display:flex;align-items:center;justify-content:center;cursor:pointer;" style-hover="background:rgba(148,163,184,0.15);">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 12h14"></path></svg>
+        </button>
+        <span style="font-size:11.5px;color:{{ c.text }};font-weight:600;min-width:34px;text-align:center;font-family:'JetBrains Mono',monospace;">{{ zoomPercent }}%</span>
+        <button onClick="{{ handleZoomIn }}" style="width:26px;height:26px;border-radius:8px;border:1px solid {{ c.border }};background:transparent;color:{{ c.text }};display:flex;align-items:center;justify-content:center;cursor:pointer;" style-hover="background:rgba(148,163,184,0.15);">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>
+        </button>
+        <button onClick="{{ handleFit }}" title="Fit tree" style="width:26px;height:26px;border-radius:8px;border:1px solid {{ c.border }};background:transparent;color:{{ c.text }};display:flex;align-items:center;justify-content:center;cursor:pointer;" style-hover="background:rgba(148,163,184,0.15);">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H4v4M16 3h4v4M8 21H4v-4M16 21h4v-4"></path></svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="{{ rightSidebarClass }}" style="width:300px;background:{{ c.surface }};border-left:1px solid {{ c.border }};padding:22px 20px;overflow-y:auto;display:flex;flex-direction:column;gap:18px;animation:cardIn .45s ease both;">
+      <span style="font-size:11.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:{{ c.muted }};">Information</span>
+      <div style="display:flex;flex-direction:column;">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid {{ c.border }};">
+          <span style="font-size:13px;color:{{ c.muted }};">Current Operation</span>
+          <span style="font-size:12px;font-weight:700;padding:4px 10px;border-radius:20px;background:{{ opBadge.bg }};color:{{ opBadge.color }};">{{ currentOperation }}</span>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid {{ c.border }};">
+          <span style="font-size:13px;color:{{ c.muted }};">Node Count</span>
+          <span style="font-size:14px;font-weight:700;font-family:'JetBrains Mono',monospace;">{{ nodeCountDisplay }}</span>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid {{ c.border }};">
+          <span style="font-size:13px;color:{{ c.muted }};">Tree Height</span>
+          <span style="font-size:14px;font-weight:700;font-family:'JetBrains Mono',monospace;">{{ heightDisplay }}</span>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid {{ c.border }};">
+          <span style="font-size:13px;color:{{ c.muted }};">Root Node</span>
+          <span style="font-size:14px;font-weight:700;font-family:'JetBrains Mono',monospace;">{{ rootDisplay }}</span>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid {{ c.border }};">
+          <span style="font-size:13px;color:{{ c.muted }};">Leaf Nodes</span>
+          <span style="font-size:14px;font-weight:700;font-family:'JetBrains Mono',monospace;">{{ leafDisplay }}</span>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid {{ c.border }};">
+          <span style="font-size:13px;color:{{ c.muted }};">Maximum Depth</span>
+          <span style="font-size:14px;font-weight:700;font-family:'JetBrains Mono',monospace;">{{ depthDisplay }}</span>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;">
+          <span style="font-size:13px;color:{{ c.muted }};">Animation Status</span>
+          <span style="font-size:12px;font-weight:700;display:flex;align-items:center;gap:6px;padding:4px 10px;border-radius:20px;background:{{ statusBadge.bg }};color:{{ statusBadge.color }};">
+            <span style="width:6px;height:6px;border-radius:50%;background:{{ statusBadge.color }};animation:{{ statusBadge.dotAnim }};"></span>
+            {{ animationStatusLabel }}
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="console-panel" style="height:190px;flex-shrink:0;background:{{ c.surfaceAlt }};border-top:1px solid {{ c.border }};display:flex;flex-direction:column;padding:14px 24px;">
+    <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:8px;flex-shrink:0;">
+      <span style="font-size:11.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:{{ c.muted }};">Console</span>
+      <span style="font-size:11.5px;color:{{ c.muted }};">Algorithm Steps</span>
+    </div>
+    <div ref="{{ consoleRef }}" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:5px;">
+      <sc-for list="{{ consoleLogs }}" as="line" hint-placeholder-count="3">
+        <div style="display:flex;align-items:center;gap:9px;font-size:12.5px;font-family:'JetBrains Mono',monospace;color:{{ c.text }};animation:fadeInUp .3s ease both;">
+          <span style="color:{{ c.muted }};font-weight:600;min-width:22px;">{{ $index }}</span>
+          <span>{{ line }}</span>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+
+  <sc-if value="{{ showBackdrop }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ closeSheets }}" style="position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:45;"></div>
+  </sc-if>
+
+  <div class="mobile-fab" style="position:fixed;bottom:16px;left:50%;transform:translateX(-50%);gap:8px;z-index:46;">
+    <button onClick="{{ toggleLeftSheet }}" style="height:40px;padding:0 16px;border-radius:20px;border:1px solid {{ c.border }};background:{{ c.surface }};color:{{ c.text }};font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;box-shadow:0 6px 20px rgba(0,0,0,0.35);">Controls</button>
+    <button onClick="{{ toggleRightSheet }}" style="height:40px;padding:0 16px;border-radius:20px;border:1px solid {{ c.border }};background:{{ c.surface }};color:{{ c.text }};font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;box-shadow:0 6px 20px rgba(0,0,0,0.35);">Info</button>
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  fpsRef = React.createRef();
+  consoleRef = React.createRef();
+  _timer = null;
+  _raf = null;
+
+  state = {
+    tree: null,
+    inputValue: '',
+    currentOperation: 'Idle',
+    animationStatus: 'idle',
+    pendingSteps: [],
+    stepIndex: -1,
+    consoleLogs: [],
+    highlight: {},
+    speedIndex: ({ slow: 0, normal: 1, fast: 2 })[this.props.defaultSpeed] ?? 1,
+    zoom: 1, panX: 0, panY: 0,
+    isDragging: false, dragStartX: 0, dragStartY: 0, dragStartPanX: 0, dragStartPanY: 0,
+    theme: this.props.defaultTheme ?? 'dark',
+    leftSidebarOpen: false,
+    rightSidebarOpen: false,
+    activeTraversal: null,
+  };
+
+  componentDidMount() {
+    this.startFps();
+    const vals = [50, 30, 70, 20, 40, 60, 80, 10, 25, 65];
+    let tree = null;
+    vals.forEach(v => { tree = this.insertPlain(tree, v); });
+    this.setState({ tree, consoleLogs: ['Welcome! Loaded a sample tree — try Insert, Delete, Search or a traversal.'] });
+  }
+  componentWillUnmount() { this.stopTimer(); if (this._raf) cancelAnimationFrame(this._raf); }
+  componentDidUpdate() { if (this.consoleRef.current) this.consoleRef.current.scrollTop = this.consoleRef.current.scrollHeight; }
+
+  startFps = () => {
+    let last = performance.now(), frames = 0;
+    const loop = (t) => {
+      frames++;
+      if (t - last >= 1000) { if (this.fpsRef.current) this.fpsRef.current.textContent = Math.round(frames * 1000 / (t - last)); frames = 0; last = t; }
+      this._raf = requestAnimationFrame(loop);
+    };
+    this._raf = requestAnimationFrame(loop);
+  };
+
+  deepClone = (n) => !n ? null : { id: n.id, value: n.value, left: this.deepClone(n.left), right: this.deepClone(n.right) };
+  insertPlain = (n, val) => { if (!n) return { id: 'n' + val, value: val, left: null, right: null }; if (val === n.value) return n; if (val < n.value) return { ...n, left: this.insertPlain(n.left, val) }; return { ...n, right: this.insertPlain(n.right, val) }; };
+  deleteByValue = (n, val) => {
+    if (!n) return null;
+    if (val < n.value) return { ...n, left: this.deleteByValue(n.left, val) };
+    if (val > n.value) return { ...n, right: this.deleteByValue(n.right, val) };
+    if (!n.left) return n.right;
+    if (!n.right) return n.left;
+    let succ = n.right; while (succ.left) succ = succ.left;
+    return { id: 'n' + succ.value, value: succ.value, left: n.left, right: this.deleteByValue(n.right, succ.value) };
+  };
+  attachChild = (tree, parentId, side, val) => {
+    const clone = this.deepClone(tree);
+    const rec = (n) => { if (!n) return false; if (n.id === parentId) { n[side] = { id: 'n' + val, value: val, left: null, right: null }; return true; } return rec(n.left) || rec(n.right); };
+    rec(clone);
+    return clone;
+  };
+
+  countNodes = (n) => !n ? 0 : 1 + this.countNodes(n.left) + this.countNodes(n.right);
+  countLeaves = (n) => !n ? 0 : (!n.left && !n.right ? 1 : this.countLeaves(n.left) + this.countLeaves(n.right));
+  heightOf = (n) => !n ? -1 : 1 + Math.max(this.heightOf(n.left), this.heightOf(n.right));
+
+  computeLayout = () => {
+    const tree = this.state.tree;
+    if (!tree) return { nodes: [], edges: [], width: 900, height: 400 };
+    let counter = 0;
+    const xGap = 90, yGap = 100, topPad = 50, leftPad = 60;
+    const pos = {};
+    const visit = (n, depth) => { if (!n) return; visit(n.left, depth + 1); pos[n.id] = { x: leftPad + counter * xGap, y: topPad + depth * yGap }; counter++; visit(n.right, depth + 1); };
+    visit(tree, 0);
+    const nodes = [], edges = [];
+    const collect = (n) => {
+      if (!n) return;
+      const p = pos[n.id];
+      nodes.push({ id: n.id, value: n.value, x: p.x, y: p.y });
+      if (n.left) { const cp = pos[n.left.id]; edges.push({ id: n.id + '_' + n.left.id, x1: p.x, y1: p.y, x2: cp.x, y2: cp.y }); }
+      if (n.right) { const cp = pos[n.right.id]; edges.push({ id: n.id + '_' + n.right.id, x1: p.x, y1: p.y, x2: cp.x, y2: cp.y }); }
+      collect(n.left); collect(n.right);
+    };
+    collect(tree);
+    return { nodes, edges, width: Math.max(leftPad * 2 + (counter - 1) * xGap, 300), height: Math.max(topPad * 2 + this.heightOf(tree) * yGap, 250) };
+  };
+
+  nodeStyleFor = (id) => {
+    const key = this.state.highlight[id];
+    if (key === 'primary') return { fill: '#1E3A5F', stroke: '#3B82F6', text: '#DBEAFE', pulsing: true };
+    if (key === 'success') return { fill: '#14311F', stroke: '#22C55E', text: '#DCFCE7', pulsing: false };
+    if (key === 'warning') return { fill: '#3F2A0C', stroke: '#F59E0B', text: '#FEF3C7', pulsing: false };
+    if (key === 'danger') return { fill: '#3F1616', stroke: '#EF4444', text: '#FEE2E2', pulsing: false };
+    return this.state.theme === 'dark'
+      ? { fill: '#1E293B', stroke: '#334155', text: '#E2E8F0', pulsing: false }
+      : { fill: '#F1F5F9', stroke: '#CBD5E1', text: '#0F172A', pulsing: false };
+  };
+
+  getDelay = () => [1400, 800, 400][this.state.speedIndex];
+  stopTimer = () => { if (this._timer) { clearTimeout(this._timer); this._timer = null; } };
+
+  runSteps = (steps, opLabel) => {
+    this.stopTimer();
+    this.setState({ currentOperation: opLabel, consoleLogs: [], highlight: {}, pendingSteps: steps, stepIndex: -1, animationStatus: steps.length ? 'playing' : 'complete' }, () => { if (steps.length) this.playNext(); });
+  };
+  playNext = () => {
+    const { pendingSteps, stepIndex } = this.state;
+    const next = stepIndex + 1;
+    if (next >= pendingSteps.length) { this.setState({ animationStatus: 'complete' }); return; }
+    const step = pendingSteps[next];
+    this.setState(s => ({
+      stepIndex: next,
+      consoleLogs: [...s.consoleLogs, step.log],
+      highlight: step.highlight !== undefined ? step.highlight : s.highlight,
+      tree: step.commit ? step.commit(s.tree) : s.tree,
+    }));
+    this._timer = setTimeout(() => { if (this.state.animationStatus === 'playing') this.playNext(); }, this.getDelay());
+  };
+  handlePlay = () => { if (this.state.animationStatus === 'complete' || this.state.pendingSteps.length === 0) return; this.setState({ animationStatus: 'playing' }, this.playNext); };
+  handlePause = () => { this.stopTimer(); this.setState({ animationStatus: 'paused' }); };
+  handleResetAnimation = () => { this.stopTimer(); this.setState({ highlight: {}, consoleLogs: [], animationStatus: 'idle', pendingSteps: [], stepIndex: -1, currentOperation: 'Idle', activeTraversal: null }); };
+
+  handleInputChange = (e) => this.setState({ inputValue: e.target.value });
+  handleInputKeyDown = (e) => { if (e.key === 'Enter') this.handleInsert(); };
+  parseVal = () => { const v = parseInt(this.state.inputValue, 10); return isNaN(v) ? null : v; };
+
+  handleInsert = () => {
+    const v = this.parseVal();
+    if (v === null) { this.setState({ consoleLogs: ['⚠ Enter a valid numeric value'] }); return; }
+    this.runSteps(this.buildInsertSteps(v), 'Insert');
+    this.setState({ inputValue: '' });
+  };
+  buildInsertSteps = (val) => {
+    const steps = [{ log: `Insert(${val})`, highlight: {} }];
+    const id = 'n' + val;
+    if (!this.state.tree) { steps.push({ log: `${val} becomes the root node`, highlight: { [id]: 'success' }, commit: () => ({ id, value: val, left: null, right: null }) }); return steps; }
+    let cur = this.state.tree;
+    while (true) {
+      steps.push({ log: `Compare ${val} with ${cur.value}`, highlight: { [cur.id]: 'primary' } });
+      if (val === cur.value) { steps.push({ log: `${val} already exists — skipped`, highlight: { [cur.id]: 'warning' } }); return steps; }
+      if (val < cur.value) {
+        steps.push({ log: `${val} < ${cur.value} → go left`, highlight: { [cur.id]: 'primary' } });
+        if (!cur.left) { const pid = cur.id; steps.push({ log: `Insert ${val} as left child of ${cur.value}`, highlight: { [id]: 'success' }, commit: (t) => this.attachChild(t, pid, 'left', val) }); return steps; }
+        cur = cur.left;
+      } else {
+        steps.push({ log: `${val} > ${cur.value} → go right`, highlight: { [cur.id]: 'primary' } });
+        if (!cur.right) { const pid = cur.id; steps.push({ log: `Insert ${val} as right child of ${cur.value}`, highlight: { [id]: 'success' }, commit: (t) => this.attachChild(t, pid, 'right', val) }); return steps; }
+        cur = cur.right;
+      }
+    }
+  };
+
+  handleDelete = () => {
+    const v = this.parseVal();
+    if (v === null) { this.setState({ consoleLogs: ['⚠ Enter a valid numeric value'] }); return; }
+    this.runSteps(this.buildDeleteSteps(v), 'Delete');
+    this.setState({ inputValue: '' });
+  };
+  buildDeleteSteps = (val) => {
+    const steps = [{ log: `Delete(${val})`, highlight: {} }];
+    let cur = this.state.tree;
+    while (cur) {
+      steps.push({ log: `Compare ${val} with ${cur.value}`, highlight: { [cur.id]: 'primary' } });
+      if (val === cur.value) { steps.push({ log: `Found ${val} — removing node`, highlight: { [cur.id]: 'danger' }, commit: (t) => this.deleteByValue(t, val) }); return steps; }
+      cur = val < cur.value ? cur.left : cur.right;
+    }
+    steps.push({ log: `${val} not found in tree`, highlight: {} });
+    return steps;
+  };
+
+  handleSearch = () => {
+    const v = this.parseVal();
+    if (v === null) { this.setState({ consoleLogs: ['⚠ Enter a valid numeric value'] }); return; }
+    this.runSteps(this.buildSearchSteps(v), 'Search');
+  };
+  buildSearchSteps = (val) => {
+    const steps = [{ log: `Search(${val})`, highlight: {} }];
+    let cur = this.state.tree; const seen = {};
+    while (cur) {
+      seen[cur.id] = 'primary';
+      steps.push({ log: `Compare ${val} with ${cur.value}`, highlight: { ...seen } });
+      if (val === cur.value) { seen[cur.id] = 'success'; steps.push({ log: `Found ${val}`, highlight: { ...seen } }); return steps; }
+      cur = val < cur.value ? cur.left : cur.right;
+    }
+    steps.push({ log: `${val} not found`, highlight: { ...seen } });
+    return steps;
+  };
+
+  handleRandomTree = () => {
+    this.stopTimer();
+    const size = this.props.randomTreeSize ?? 9;
+    const vals = new Set();
+    while (vals.size < size) vals.add(1 + Math.floor(Math.random() * 99));
+    let tree = null;
+    vals.forEach(v => { tree = this.insertPlain(tree, v); });
+    this.setState({ tree, highlight: {}, consoleLogs: [`Generated random tree with ${vals.size} nodes`], currentOperation: 'Random Tree', animationStatus: 'complete', pendingSteps: [], stepIndex: -1 });
+  };
+  handleClearTree = () => { this.stopTimer(); this.setState({ tree: null, highlight: {}, consoleLogs: ['Tree cleared'], currentOperation: 'Idle', animationStatus: 'idle', pendingSteps: [], stepIndex: -1 }); };
+  handleGlobalReset = () => { this.stopTimer(); this.setState({ tree: null, inputValue: '', consoleLogs: [], highlight: {}, currentOperation: 'Idle', animationStatus: 'idle', pendingSteps: [], stepIndex: -1, zoom: 1, panX: 0, panY: 0, activeTraversal: null }); };
+
+  getTraversalOrder = (type) => {
+    const res = []; const tree = this.state.tree;
+    if (type === 'Inorder') { const rec = (n) => { if (!n) return; rec(n.left); res.push(n); rec(n.right); }; rec(tree); }
+    else if (type === 'Preorder') { const rec = (n) => { if (!n) return; res.push(n); rec(n.left); rec(n.right); }; rec(tree); }
+    else if (type === 'Postorder') { const rec = (n) => { if (!n) return; rec(n.left); rec(n.right); res.push(n); }; rec(tree); }
+    else { if (tree) { const q = [tree]; while (q.length) { const n = q.shift(); res.push(n); if (n.left) q.push(n.left); if (n.right) q.push(n.right); } } }
+    return res;
+  };
+  handleTraversal = (type) => {
+    const order = this.getTraversalOrder(type);
+    if (!order.length) { this.setState({ consoleLogs: ['Tree is empty'] }); return; }
+    const steps = [{ log: `${type} Traversal started`, highlight: {} }];
+    const acc = {};
+    order.forEach(n => { acc[n.id] = 'warning'; steps.push({ log: `Visit ${n.value}`, highlight: { ...acc } }); });
+    steps.push({ log: `${type}: [${order.map(n => n.value).join(', ')}]`, highlight: { ...acc } });
+    this.setState({ activeTraversal: type });
+    this.runSteps(steps, type + ' Traversal');
+  };
+
+  handleZoomIn = () => this.setState(s => ({ zoom: Math.min(2.5, +(s.zoom + 0.15).toFixed(2)) }));
+  handleZoomOut = () => this.setState(s => ({ zoom: Math.max(0.4, +(s.zoom - 0.15).toFixed(2)) }));
+  handleFit = () => this.setState({ zoom: 1, panX: 0, panY: 0 });
+  handleWheel = (e) => { e.preventDefault(); const delta = e.deltaY > 0 ? -0.1 : 0.1; this.setState(s => ({ zoom: Math.min(2.5, Math.max(0.4, +(s.zoom + delta).toFixed(2))) })); };
+  handleMouseDown = (e) => this.setState({ isDragging: true, dragStartX: e.clientX, dragStartY: e.clientY, dragStartPanX: this.state.panX, dragStartPanY: this.state.panY });
+  handleMouseMove = (e) => { if (!this.state.isDragging) return; const dx = e.clientX - this.state.dragStartX, dy = e.clientY - this.state.dragStartY; this.setState({ panX: this.state.dragStartPanX + dx, panY: this.state.dragStartPanY + dy }); };
+  handleMouseUp = () => this.setState({ isDragging: false });
+
+  handleThemeToggle = () => this.setState(s => ({ theme: s.theme === 'dark' ? 'light' : 'dark' }));
+  handleSpeedChange = (e) => this.setState({ speedIndex: parseInt(e.target.value, 10) });
+  toggleLeftSheet = () => this.setState(s => ({ leftSidebarOpen: !s.leftSidebarOpen, rightSidebarOpen: false }));
+  toggleRightSheet = () => this.setState(s => ({ rightSidebarOpen: !s.rightSidebarOpen, leftSidebarOpen: false }));
+  closeSheets = () => this.setState({ leftSidebarOpen: false, rightSidebarOpen: false });
+
+  renderVals() {
+    const dark = { bg: '#0F172A', surface: '#1E293B', surfaceAlt: '#182339', border: 'rgba(255,255,255,0.08)', text: '#F1F5F9', muted: '#94A3B8', canvasBg: '#0B1220', dot: 'rgba(148,163,184,0.12)', edge: '#334155' };
+    const light = { bg: '#F8FAFC', surface: '#FFFFFF', surfaceAlt: '#F1F5F9', border: 'rgba(15,23,42,0.09)', text: '#0F172A', muted: '#64748B', canvasBg: '#F1F5F9', dot: 'rgba(15,23,42,0.08)', edge: '#CBD5E1' };
+    const c = this.state.theme === 'dark' ? dark : light;
+    const isDark = this.state.theme === 'dark';
+
+    const layout = this.computeLayout();
+    const nodes = layout.nodes.map(n => {
+      const st = this.nodeStyleFor(n.id);
+      return { ...n, fill: st.fill, stroke: st.stroke, text: st.text, pulseAnim: st.pulsing ? 'pulseGlow 1s ease-in-out infinite' : 'none' };
+    });
+
+    const opColors = {
+      Insert: { bg: 'rgba(59,130,246,0.15)', color: '#3B82F6' },
+      Delete: { bg: 'rgba(239,68,68,0.15)', color: '#EF4444' },
+      Search: { bg: 'rgba(245,158,11,0.15)', color: '#F59E0B' },
+      'Random Tree': { bg: 'rgba(148,163,184,0.15)', color: c.muted },
+      Idle: { bg: 'rgba(148,163,184,0.15)', color: c.muted },
+    };
+    const opBadge = opColors[this.state.currentOperation] || { bg: 'rgba(34,197,94,0.15)', color: '#22C55E' };
+
+    const statusMap = {
+      idle: { label: 'Idle', bg: 'rgba(148,163,184,0.15)', color: c.muted, dotAnim: 'none' },
+      playing: { label: 'Playing', bg: 'rgba(59,130,246,0.15)', color: '#3B82F6', dotAnim: 'dotBlink 1s ease-in-out infinite' },
+      paused: { label: 'Paused', bg: 'rgba(245,158,11,0.15)', color: '#F59E0B', dotAnim: 'none' },
+      complete: { label: 'Complete', bg: 'rgba(34,197,94,0.15)', color: '#22C55E', dotAnim: 'none' },
+    };
+    const statusBadge = statusMap[this.state.animationStatus] || statusMap.idle;
+
+    const tree = this.state.tree;
+    const isEmpty = !tree;
+
+    const traversalDefs = [
+      { key: 'Inorder', label: 'Inorder' },
+      { key: 'Preorder', label: 'Preorder' },
+      { key: 'Postorder', label: 'Postorder' },
+      { key: 'Level Order', label: 'Level Order' },
+    ];
+    const traversalTypes = traversalDefs.map(td => {
+      const active = this.state.activeTraversal === td.key && this.state.animationStatus === 'playing';
+      return {
+        label: td.label,
+        onClick: () => this.handleTraversal(td.key),
+        bg: active ? 'rgba(245,158,11,0.18)' : 'transparent',
+        border: active ? 'rgba(245,158,11,0.5)' : c.border,
+        color: active ? '#F59E0B' : c.text,
+      };
+    });
+
+    return {
+      c, isDark, isLight: !isDark,
+      inputValue: this.state.inputValue,
+      handleInputChange: this.handleInputChange, handleInputKeyDown: this.handleInputKeyDown,
+      handleInsert: this.handleInsert, handleDelete: this.handleDelete, handleSearch: this.handleSearch,
+      handleRandomTree: this.handleRandomTree, handleClearTree: this.handleClearTree, handleGlobalReset: this.handleGlobalReset,
+      handleThemeToggle: this.handleThemeToggle,
+      isEmpty, hasTree: !isEmpty,
+      traversalTypes,
+      speedIndex: this.state.speedIndex, speedLabel: ['Slow', 'Normal', 'Fast'][this.state.speedIndex], handleSpeedChange: this.handleSpeedChange,
+      handlePlay: this.handlePlay, handlePause: this.handlePause, handleResetAnimation: this.handleResetAnimation,
+      playDisabled: this.state.animationStatus === 'playing' || this.state.animationStatus === 'complete' || this.state.pendingSteps.length === 0,
+      pauseDisabled: this.state.animationStatus !== 'playing',
+      playOpacity: (this.state.animationStatus === 'playing' || this.state.animationStatus === 'complete' || this.state.pendingSteps.length === 0) ? 0.4 : 1,
+      pauseOpacity: this.state.animationStatus !== 'playing' ? 0.4 : 1,
+      nodes, edges: layout.edges, layoutWidth: layout.width, layoutHeight: layout.height,
+      canvasTransform: `translate(${this.state.panX}px, ${this.state.panY}px) scale(${this.state.zoom})`,
+      canvasTransition: this.state.isDragging ? 'none' : 'transform .25s ease',
+      wrapperCursor: this.state.isDragging ? 'grabbing' : 'grab',
+      handleWheel: this.handleWheel, handleMouseDown: this.handleMouseDown, handleMouseMove: this.handleMouseMove, handleMouseUp: this.handleMouseUp,
+      handleZoomIn: this.handleZoomIn, handleZoomOut: this.handleZoomOut, handleFit: this.handleFit,
+      zoomPercent: Math.round(this.state.zoom * 100),
+      fpsRef: this.fpsRef,
+      legend: [
+        { label: 'Active / Comparing', color: '#3B82F6' },
+        { label: 'Found', color: '#22C55E' },
+        { label: 'Deleted', color: '#EF4444' },
+        { label: 'Traversed', color: '#F59E0B' },
+      ],
+      currentOperation: this.state.currentOperation, opBadge,
+      nodeCountDisplay: this.countNodes(tree),
+      heightDisplay: tree ? this.heightOf(tree) : '—',
+      depthDisplay: tree ? this.heightOf(tree) + 1 : '—',
+      rootDisplay: tree ? tree.value : '—',
+      leafDisplay: this.countLeaves(tree),
+      animationStatusLabel: statusBadge.label, statusBadge,
+      consoleLogs: this.state.consoleLogs, consoleRef: this.consoleRef,
+      leftSidebarClass: 'left-sidebar' + (this.state.leftSidebarOpen ? ' sheet-open' : ''),
+      rightSidebarClass: 'right-sidebar' + (this.state.rightSidebarOpen ? ' sheet-open' : ''),
+      toggleLeftSheet: this.toggleLeftSheet, toggleRightSheet: this.toggleRightSheet, closeSheets: this.closeSheets,
+      showBackdrop: this.state.leftSidebarOpen || this.state.rightSidebarOpen,
+    };
+  }
+}
+</script>
+</body>
+</html>
